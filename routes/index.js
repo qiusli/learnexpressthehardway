@@ -3,6 +3,24 @@ var router = express.Router();
 var crypto = require('crypto'),
 	User = require('../models/user'),
 	Post = require('../models/post');
+var multer = require('multer');
+// var upload = multer({
+// 	dest: './public/images',
+// 	rename: function (fieldname, filename) {
+// 		return "abc";
+// 	}
+// });
+var storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, './public/images')
+	},
+	filename: function (req, file, cb) {
+		cb(null, file.fieldname + '-' + Date.now())
+	}
+});
+var upload = multer({
+	storage: storage
+});
 
 /* GET home page. */
 router.get('/', function (req, res) {
@@ -134,6 +152,22 @@ router.get('/logout', function (req, res) {
 	req.session.user = null;
 	req.flash('success', '登出成功!');
 	res.redirect('/');
+});
+
+router.get('/upload', checkLogin);
+router.get('/upload', function (req, res) {
+	res.render('upload', {
+		title: '文件上传',
+		user: req.session.user,
+		success: req.flash('success').toString(),
+		error: req.flash('error').toString()
+	});
+});
+
+router.post('/upload', checkLogin);
+router.post('/upload', upload.single('file1'), function (req, res) {
+	req.flash('success', '文件上传成功!');
+	res.redirect('/upload');
 });
 
 function checkLogin(req, res, next) {
